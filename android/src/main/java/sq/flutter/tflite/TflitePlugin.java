@@ -1,6 +1,7 @@
 package sq.flutter.tflite;
 
 import android.content.Context;
+import android.app.Activity;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -57,6 +58,8 @@ public class TflitePlugin implements MethodCallHandler {
     private Vector<String> labels;
     float[][] labelProb;
     private static final int BYTES_PER_CHANNEL = 4;
+    private Activity activity;
+
 
     String[] partNames = {
         "nose", "leftEye", "rightEye", "leftEar", "rightEar", "leftShoulder",
@@ -86,6 +89,7 @@ public class TflitePlugin implements MethodCallHandler {
 
     private TflitePlugin(Registrar registrar) {
         this.mRegistrar = registrar;
+        this.activity = registrar.activity();
     }
 
     @Override
@@ -566,30 +570,37 @@ public class TflitePlugin implements MethodCallHandler {
     }
 
     void detectObjectOnFrame(HashMap args, Result result) throws IOException {
+        final HashMap arg = args;
         List<byte[]> bytesList = (ArrayList) args.get("bytesList");
-        String model = args.get("model").toString();
-        double mean = (double) (args.get("imageMean"));
-        float IMAGE_MEAN = (float) mean;
-        double std = (double) (args.get("imageStd"));
-        float IMAGE_STD = (float) std;
-        int imageHeight = (int) (args.get("imageHeight"));
-        int imageWidth = (int) (args.get("imageWidth"));
-        int rotation = (int) (args.get("rotation"));
-        double threshold = (double) args.get("threshold");
-        float THRESHOLD = (float) threshold;
-        int NUM_RESULTS_PER_CLASS = (int) args.get("numResultsPerClass");
+        final String model = args.get("model").toString();
+        final double mean = (double) (args.get("imageMean"));
+        final float IMAGE_MEAN = (float) mean;
+        final double std = (double) (args.get("imageStd"));
+        final float IMAGE_STD = (float) std;
+        final int imageHeight = (int) (args.get("imageHeight"));
+        final int imageWidth = (int) (args.get("imageWidth"));
+        final int rotation = (int) (args.get("rotation"));
+        final double threshold = (double) args.get("threshold");
+        final float THRESHOLD = (float) threshold;
+        final int NUM_RESULTS_PER_CLASS = (int) args.get("numResultsPerClass");
 
-        List<Double> ANCHORS = (ArrayList) args.get("anchors");
-        int BLOCK_SIZE = (int) args.get("blockSize");
-        int NUM_BOXES_PER_BLOCK = (int) args.get("numBoxesPerBlock");
+        final List<Double> ANCHORS = (ArrayList) args.get("anchors");
+        final int BLOCK_SIZE = (int) args.get("blockSize");
+        final int NUM_BOXES_PER_BLOCK = (int) args.get("numBoxesPerBlock");
 
-        ByteBuffer imgData = feedInputTensorFrame(bytesList, imageHeight, imageWidth, IMAGE_MEAN, IMAGE_STD, rotation);
+        final ByteBuffer imgData = feedInputTensorFrame(bytesList, imageHeight, imageWidth, IMAGE_MEAN, IMAGE_STD, rotation);
 
-        if (model.equals("SSDMobileNet")) {
-            new RunSSDMobileNet(args, imgData, NUM_RESULTS_PER_CLASS, THRESHOLD, result).executeTfliteTask();
-        } else {
-            new RunYOLO(args, imgData, BLOCK_SIZE, NUM_BOXES_PER_BLOCK, ANCHORS, THRESHOLD, NUM_RESULTS_PER_CLASS, result).executeTfliteTask();
-        }
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                if (model.equals("SSDMobileNet")) {
+                    new RunSSDMobileNet(arg, imgData, NUM_RESULTS_PER_CLASS, THRESHOLD, result).executeTfliteTask();
+                } else {
+                    new RunYOLO(arg, imgData, BLOCK_SIZE, NUM_BOXES_PER_BLOCK, ANCHORS, THRESHOLD, NUM_RESULTS_PER_CLASS, result).executeTfliteTask();
+                }
+            }
+        });
     }
 
     private class RunSSDMobileNet extends TfliteTask {
