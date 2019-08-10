@@ -569,8 +569,7 @@ public class TflitePlugin implements MethodCallHandler {
         }
     }
 
-    void detectObjectOnFrame(HashMap args, Result result) throws IOException {
-        final HashMap arg = args;
+    void detectObjectOnFrame(final HashMap args,final Result result) throws IOException {
         List<byte[]> bytesList = (ArrayList) args.get("bytesList");
         final String model = args.get("model").toString();
         final double mean = (double) (args.get("imageMean"));
@@ -595,7 +594,7 @@ public class TflitePlugin implements MethodCallHandler {
             public void run() {
 
                 if (model.equals("SSDMobileNet")) {
-                    new RunSSDMobileNet(arg, imgData, NUM_RESULTS_PER_CLASS, THRESHOLD, result).executeTfliteTask();
+                    new RunSSDMobileNet(args, imgData, NUM_RESULTS_PER_CLASS, THRESHOLD, result).executeTfliteTask();
                 } else {
                     new RunYOLO(arg, imgData, BLOCK_SIZE, NUM_BOXES_PER_BLOCK, ANCHORS, THRESHOLD, NUM_RESULTS_PER_CLASS, result).executeTfliteTask();
                 }
