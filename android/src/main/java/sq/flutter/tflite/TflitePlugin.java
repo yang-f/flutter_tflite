@@ -570,33 +570,39 @@ public class TflitePlugin implements MethodCallHandler {
     }
 
     void detectObjectOnFrame(final HashMap args,final Result result) throws IOException {
-        List<byte[]> bytesList = (ArrayList) args.get("bytesList");
-        final String model = args.get("model").toString();
-        final double mean = (double) (args.get("imageMean"));
-        final float IMAGE_MEAN = (float) mean;
-        final double std = (double) (args.get("imageStd"));
-        final float IMAGE_STD = (float) std;
-        final int imageHeight = (int) (args.get("imageHeight"));
-        final int imageWidth = (int) (args.get("imageWidth"));
-        final int rotation = (int) (args.get("rotation"));
-        final double threshold = (double) args.get("threshold");
-        final float THRESHOLD = (float) threshold;
-        final int NUM_RESULTS_PER_CLASS = (int) args.get("numResultsPerClass");
-
-        final List<Double> ANCHORS = (ArrayList) args.get("anchors");
-        final int BLOCK_SIZE = (int) args.get("blockSize");
-        final int NUM_BOXES_PER_BLOCK = (int) args.get("numBoxesPerBlock");
-
-        final ByteBuffer imgData = feedInputTensorFrame(bytesList, imageHeight, imageWidth, IMAGE_MEAN, IMAGE_STD, rotation);
-
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                try {
 
-                if (model.equals("SSDMobileNet")) {
-                    new RunSSDMobileNet(args, imgData, NUM_RESULTS_PER_CLASS, THRESHOLD, result).executeTfliteTask();
-                } else {
-                    new RunYOLO(args, imgData, BLOCK_SIZE, NUM_BOXES_PER_BLOCK, ANCHORS, THRESHOLD, NUM_RESULTS_PER_CLASS, result).executeTfliteTask();
+                    List<byte[]> bytesList = (ArrayList) args.get("bytesList");
+                    String model = args.get("model").toString();
+                    double mean = (double) (args.get("imageMean"));
+                    float IMAGE_MEAN = (float) mean;
+                    double std = (double) (args.get("imageStd"));
+                    float IMAGE_STD = (float) std;
+                    int imageHeight = (int) (args.get("imageHeight"));
+                    int imageWidth = (int) (args.get("imageWidth"));
+                    int rotation = (int) (args.get("rotation"));
+                    double threshold = (double) args.get("threshold");
+                    float THRESHOLD = (float) threshold;
+                    int NUM_RESULTS_PER_CLASS = (int) args.get("numResultsPerClass");
+
+                    List<Double> ANCHORS = (ArrayList) args.get("anchors");
+                    int BLOCK_SIZE = (int) args.get("blockSize");
+                    int NUM_BOXES_PER_BLOCK = (int) args.get("numBoxesPerBlock");
+
+                    ByteBuffer imgData = feedInputTensorFrame(bytesList, imageHeight, imageWidth, IMAGE_MEAN, IMAGE_STD, rotation);
+
+
+
+                    if (model.equals("SSDMobileNet")) {
+                        new RunSSDMobileNet(args, imgData, NUM_RESULTS_PER_CLASS, THRESHOLD, result).executeTfliteTask();
+                    } else {
+                        new RunYOLO(args, imgData, BLOCK_SIZE, NUM_BOXES_PER_BLOCK, ANCHORS, THRESHOLD, NUM_RESULTS_PER_CLASS, result).executeTfliteTask();
+                    }
+                } catch (Exception e) {
+                    result.error("Failed to run model", e.getMessage(), e);
                 }
             }
         });

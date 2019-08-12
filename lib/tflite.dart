@@ -165,7 +165,7 @@ class Tflite {
     int numBoxesPerBlock = 5,
     bool asynch = true,
   }) async {
-    return await _channel.invokeMethod(
+    return _channel.invokeMethod(
       'detectObjectOnFrame',
       {
         "bytesList": bytesList,
